@@ -9,7 +9,7 @@ class Room extends Model
 {
     use HasFactory;
     protected $fillable=['name'];
-    public function student(){
+    public function students(){
         return $this->belongsToMany(Student::class);
     }
 }

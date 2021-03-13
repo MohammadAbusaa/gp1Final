@@ -25,20 +25,16 @@ use App\Http\Controllers\RoomsCont;
 //     return $request->user();
 // });
 
-Route::group(['middleware'=>['auth:sanctum,teacher,student,father']],function(){
-    Route::post('/dashboard',[AuthCont::class,'show']);
-    Route::post('/logoutUser',[AuthCont::class,'logoutUser']);
-    Route::post('/getStudentRooms',[RoomsCont::class,'index']);
-    Route::post('/getStudentRoom/{id}',[RoomsCont::class,'showStudentRooms']);
+Route::group(['middleware' => ['auth:sanctum,teacher,student,father']], function () {
+    Route::post('/dashboard', [AuthCont::class, 'show']);
+    Route::post('/logoutUser', [AuthCont::class, 'logoutUser']);
+    Route::post('/getStudentRooms', [RoomsCont::class, 'getStudentRooms']);
+    Route::post('/getStudentRoom/{id}', [RoomsCont::class, 'showStudentRoom']);
 });
 
 //Route::middleware('auth:sanctum')->post('/dashboard',[UserCont::class,'show']);
 
 
-Route::put('/SignUpUser',[AuthCont::class,'store']);
+Route::put('/SignUpUser', [AuthCont::class, 'store']);
 
-Route::post('/loginUser',[AuthCont::class,'loginUser'])->name('login');
-
-
-
-
+Route::post('/loginUser', [AuthCont::class, 'loginUser'])->name('login');

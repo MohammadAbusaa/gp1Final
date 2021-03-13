@@ -16,7 +16,7 @@ class Student extends Authenticatable
     public function getAuthPassword(){
         return $this->password;
     }
-    public function room(){
-        return $this->belongsToMany(Room::class);
+    public function rooms(){
+        return $this->belongsToMany(Room::class)->withTimeStamps();
     }
 }
