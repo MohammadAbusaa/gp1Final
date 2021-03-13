@@ -2,9 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SignUpCont;
-use App\Http\Controllers\LogInCont;
-use App\Http\Controllers\UserCont;
+use App\Http\Controllers\AuthCont;
+use App\Http\Controllers\RoomsCont;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -17,19 +17,28 @@ use App\Http\Controllers\UserCont;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+// Route::middleware('auth:api')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
+
+// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+//     return $request->user();
+// });
+
+Route::group(['middleware'=>['auth:sanctum,teacher,student,father']],function(){
+    Route::post('/dashboard',[AuthCont::class,'show']);
+    Route::post('/logoutUser',[AuthCont::class,'logoutUser']);
+    Route::post('/getStudentRooms',[RoomsCont::class,'index']);
+    Route::post('/getStudentRoom/{id}',[RoomsCont::class,'showStudentRooms']);
 });
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-
-Route::post('/dashboard',[UserCont::class,'show'])->middleware('auth:sanctum');
 //Route::middleware('auth:sanctum')->post('/dashboard',[UserCont::class,'show']);
-Route::post('/logoutUser',[UserCont::class,'logoutUser'])->middleware('auth:sanctum');
 
-Route::put('/SignUpUser',[SignUpCont::class,'store']);
 
-Route::post('/loginUser',[LogInCont::class,'loginUser'])->name('login');
+Route::put('/SignUpUser',[AuthCont::class,'store']);
+
+Route::post('/loginUser',[AuthCont::class,'loginUser'])->name('login');
+
+
+
+

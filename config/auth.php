@@ -14,7 +14,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => 'web',
+        'guard' => 'api',
         'passwords' => 'users',
     ],
 
@@ -91,8 +91,9 @@ return [
         //     'table' => 'users',
         // ],
         'teachers'=>[
-            'driver'=>'database',
-            'table'=>'teachers'///'model'=>App\Models\Teacher::class,
+            'driver'=>'eloquent',
+            //'table'=>'teachers'
+            'model'=>App\Models\Teacher::class,
         ],
         'students'=>[
             'driver'=>'eloquent',
