@@ -22,7 +22,7 @@ class AuthCont extends Controller
             return response()->json([
                 'token' => $token->plainTextToken,
                 'user' => $request->user('teacher')->name,
-                'link' => 'http://localhost:8080/dashboard',
+                'link' => 'http://localhost:8080/teacher',
                 'time' => \time(),
             ]);
         } else if (auth()->guard('student')->attempt(['email' => strval($creds['email']), 'password' => strval($creds['password'])], $request->remember)) {
@@ -103,6 +103,7 @@ class AuthCont extends Controller
         ];
         return response()->json($data);
     }
+
     public function logoutUser(Request $request)
     {
         //$request->session()->invalidate();
@@ -121,5 +122,14 @@ class AuthCont extends Controller
             return response('logged out!');
         }
         return response('error!');
+    }
+
+    public function updateInfo(Request $request)
+    {
+        $info=$request->validate([
+            'name'=>'required',
+            'email'=>'required|unique:teachers,email|unique:students,email|unique:fathers,email',
+            'password'=>'required'
+        ]);
     }
 }

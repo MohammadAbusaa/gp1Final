@@ -29,7 +29,10 @@ Route::group(['middleware' => ['auth:sanctum,teacher,student,father']], function
     Route::post('/dashboard', [AuthCont::class, 'show']);
     Route::post('/logoutUser', [AuthCont::class, 'logoutUser']);
     Route::post('/getStudentRooms', [RoomsCont::class, 'getStudentRooms']);
-    Route::post('/getStudentRoom/{id}', [RoomsCont::class, 'showStudentRoom']);
+    Route::post('/makeRoom',[RoomsCont::class,'create']);
+    Route::post('/checkOldPass',[RoomsCont::class,'checkPass']);
+    Route::post('/updateInfo',[AuthCont::class,'updateInfo']);
+    Route::post('/getRoomInfo/{id}',[RoomsCont::class,'getRoomInfo']);
 });
 
 //Route::middleware('auth:sanctum')->post('/dashboard',[UserCont::class,'show']);
