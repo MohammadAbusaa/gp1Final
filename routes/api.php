@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthCont;
 use App\Http\Controllers\RoomsCont;
+use App\Http\Controllers\InfoCont;
 
 
 /*
@@ -25,14 +26,18 @@ use App\Http\Controllers\RoomsCont;
 //     return $request->user();
 // });
 
-Route::group(['middleware' => ['auth:sanctum,teacher,student,father']], function () {
-    Route::post('/dashboard', [AuthCont::class, 'show']);
+Route::group(['middleware' => ['auth:sanctum']], function () {
+    Route::post('/showTInfo', [InfoCont::class, 'showTeacherInfo']);
     Route::post('/logoutUser', [AuthCont::class, 'logoutUser']);
     Route::post('/getStudentRooms', [RoomsCont::class, 'getStudentRooms']);
     Route::post('/makeRoom',[RoomsCont::class,'create']);
-    Route::post('/checkOldPass',[RoomsCont::class,'checkPass']);
-    Route::post('/updateInfo',[AuthCont::class,'updateInfo']);
+    //Route::post('/checkOldPass',[RoomsCont::class,'checkPass']);
+    //Route::post('/updateInfo',[AuthCont::class,'updateInfo']);
     Route::post('/getRoomInfo/{id}',[RoomsCont::class,'getRoomInfo']);
+    Route::post('/getPosts/{id}',[RoomsCont::class,'getRoomPosts']);
+    Route::post('/getAssignments/{id}',[RoomsCont::class,'getRoomAssignments']);
+    Route::post('/changeProfilePic',[InfoCont::class,'uploadImage']);
+    Route::post('/addPost/{id}',[RoomsCont::class,'storePost']);
 });
 
 //Route::middleware('auth:sanctum')->post('/dashboard',[UserCont::class,'show']);

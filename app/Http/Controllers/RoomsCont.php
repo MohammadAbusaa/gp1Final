@@ -3,13 +3,23 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\Post;
 use Illuminate\Http\Request;
+use App\Events\PostSent;
 
 class RoomsCont extends Controller
 {
     public function getStudentRooms(Request $request)
     {
-        return response()->json(['rooms'=>auth()->user('student')->rooms]);
+        $rooms=$request->user()->student->rooms;
+        $arr=[];
+        foreach ($rooms as $item) {
+            array_push($arr,[
+                'name'=>$item['name'],
+                'room_id'=>$item['pivot']->room_id,
+            ]);
+        }
+        return response()->json(['rooms'=>$arr]);
     }
 
     public function create(Request $request){
@@ -21,9 +31,10 @@ class RoomsCont extends Controller
         ]));
         $room->name=$request->name;
         $room->class=$request->class;
-        $room->type=$request->type;
-        if(!($request->subject==''))$room->subject=$request->subject;
-        $room->teacher_id=auth()->user('teacher')->id;
+        $room->subject=$request->subject;
+        $room->teacher_id=$request->user()->id;
+        if($request->type=='public')$room->type=1;
+        else $room->type=0;
 
         $room->save();
 
@@ -31,19 +42,39 @@ class RoomsCont extends Controller
 
     }
 
-    public function checkPass(Request $request)
-    {
-        if(auth()->user()->getAuthPassword()==$request->password)return response()->json(['flag'=>true]);
-        else return response()->json(['flag'=>false]);
-    }
-
     public function getRoomInfo(Request $request,$id)
     {
         $room=Room::find($id);
         $info=[
-            'name'=>$room->name,
-            'teacher'=>$room->teacher,
-            'subject'=>$room->subject,
+            'roomInf'=>[
+                'name'=>$room->name,
+                'teacher'=>$room->teacher->user->name,
+                'subject'=>$room->subject,
+            ],
+
         ];
+        return response()->json($info);
+    }
+
+    public function getRoomPosts(Request $request,$id)
+    {
+        $room=Room::find($id)->first();
+        $posts=$room->posts;
+        return response()->json($posts);
+    }
+
+    public function storePost(Request $request,$id)
+    {
+        $post=new Post($request->validate([
+            'post'=>'required',
+        ]));
+        $post->body=$request->post;
+        $post->user_id=$request->user()->id;
+        $post->room_id=$id;
+        $post->save();
+
+        \broadcast(new PostSent($request->user(),$post))->toOthers();
+
+        return response('added');
     }
 }

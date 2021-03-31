@@ -6,7 +6,10 @@ use Illuminate\Http\Request;
 use App\Models\Student;
 use App\Models\Father;
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class AuthCont extends Controller
 {
@@ -16,8 +19,56 @@ class AuthCont extends Controller
             'email' => 'required|email',
             'password' => 'required',
         ]);
+        //dd(Auth::guard('teacher')->attempt(['email' => $creds['email'], 'password' => $creds['password']], $request->remember));
+        if($user=DB::table('users')->where('email',$creds['email'])->first()){
+            //dd($user);
+            if($t=DB::table('teachers')->where('user_id',$user->id)->first()){
+                if(Hash::check($creds['password'], $user->password)){
+                    Auth::loginUsingId($user->id);
+                    $token = $request->user()->createToken('teacher' . $user->id);
+                    return response()->json([
+                        'token' => $token->plainTextToken,
+                        'user' => $user->name,
+                        'link' => 'http://localhost:8080/teacher',
+                        'time' => \time(),
+                    ]);
+                }
+                else return response('invalid creds')->setStatusCode(422);
+            }
+            else if($s=DB::table('students')->where('user_id',$user->id)->first()){
+                    if(Hash::check($creds['password'], $user->password)){
+                        Auth::loginUsingId($user->id);
+                        $token = $request->user()->createToken('student' . $user->id);
+                        return response()->json([
+                            'token' => $token->plainTextToken,
+                            'user' => $user->name,
+                            'link' => 'http://localhost:8080/student',
+                            'time' => \time(),
+                        ]);
+                    }
+                    else return response('invalid creds')->setStatusCode(422);
+            }
+            else if($f=DB::table('fathers')->where('user_id',$user->id)->first()){
+                    if(Hash::check($creds['password'], $user->password)){
+                        Auth::loginUsingId($user->id);
+                        $token = $request->user()->createToken('father' . $user->id);
+                        return response()->json([
+                            'token' => $token->plainTextToken,
+                            'user' => $user->name,
+                            'link' => 'http://localhost:8080/father',
+                            'time' => \time(),
+                        ]);
+                    }
+                else return response('invalid creds')->setStatusCode(422);
+            }
+            else return response()->json(['fail'=>'invalid creds']);
+        }
+        else return response()->json(['fail'=>'invalid creds']);
+
+        /* previuos database structure
         if (auth()->guard('teacher')->attempt(['email' => $creds['email'], 'password' => $creds['password']], $request->remember)) {
             //$request->session()->regenerate(true);
+            {
             $token = $request->user('teacher')->createToken('teacher' . $request->user('teacher')->id);
             return response()->json([
                 'token' => $token->plainTextToken,
@@ -25,6 +76,7 @@ class AuthCont extends Controller
                 'link' => 'http://localhost:8080/teacher',
                 'time' => \time(),
             ]);
+        }
         } else if (auth()->guard('student')->attempt(['email' => strval($creds['email']), 'password' => strval($creds['password'])], $request->remember)) {
             //$request->session()->regenerate(true);
 
@@ -48,6 +100,7 @@ class AuthCont extends Controller
             ]);
         }
         return response('No match for ' . $request->email . '\n' . $creds['email'] . '\t' . $creds['password'])->setStatusCode(422);
+        */
     }
 
 
@@ -59,49 +112,44 @@ class AuthCont extends Controller
         if (isset($request->type)) $typeOfReq = $request->type;
         else $typeOfReq = 3;
         if ($typeOfReq == 0) { // 0 is teacher
-            $teacher = new Teacher($request->validate([
+            $teacher = new User($request->validate([
                 'name' => 'required',
-                'email' => 'required|unique:teachers,email|unique:students,email|unique:fathers,email',
+                'email' => 'required|unique:users,email|email',
                 'password' => 'required',
             ]));
             $teacher->name = $request->name;
             $teacher->email = $request->email;
             $teacher->password = bcrypt($request->password);
             $teacher->save();
+            ($teacher->teacher()->create([
+                'id'=>$teacher->id,
+            ]));
         } else if ($typeOfReq == 1) { // 1  is student
-            $student = new Student($request->validate([
+            $student = new User($request->validate([
                 'name' => 'required',
-                'email' => 'required|unique:teachers,email|unique:students,email|unique:fathers,email',
+                'email' => 'required|unique:users,email|email',
                 'password' => 'required',
             ]));
             $student->name = $request->name;
             $student->email = $request->email;
             $student->password = bcrypt($request->password);
             $student->save();
+            $student->student()->create([
+                'id'=>$student->id,
+            ]);
         } else if ($typeOfReq == 2) { // 2 is parent
-            $parent = new Father($request->validate([
+            $parent = new User($request->validate([
                 'name' => 'required',
-                'email' => 'required|unique:teachers,email|unique:students,email|unique:fathers,email',
+                'email' => 'required|unique:users,email',
                 'password' => 'required',
             ]));
             $parent->name = $request->name;
             $parent->email = $request->email;
             $parent->password = bcrypt($request->password);
             $parent->save();
+            $parent->parent()->create(['id'=>$parent->id]);
         } else return response('type is invalid!')->setStatusCode(422);
         return response('http://localhost:8080/LogIn');
-    }
-
-
-
-    public function show(Request $request)
-    {
-        //dd($request->user()->id);
-        $data = [
-            'username' => $request->user()->name,
-            'email' => $request->user()->email,
-        ];
-        return response()->json($data);
     }
 
     public function logoutUser(Request $request)
@@ -111,6 +159,7 @@ class AuthCont extends Controller
         //dd($request->user());
         $request->user()->currentAccessToken()->delete();
         return response('logged out');
+        /*
         if ($request->user('teacher')) {
             $request->user('teacher')->currentAccessToken()->delete();
             return response('logged out!');
@@ -121,15 +170,9 @@ class AuthCont extends Controller
             $request->user('father')->currentAccessToken()->delete();
             return response('logged out!');
         }
-        return response('error!');
+        return response('error!');*/
     }
 
-    public function updateInfo(Request $request)
-    {
-        $info=$request->validate([
-            'name'=>'required',
-            'email'=>'required|unique:teachers,email|unique:students,email|unique:fathers,email',
-            'password'=>'required'
-        ]);
-    }
+
+
 }

@@ -14,7 +14,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => 'api',
+        'guard' => 'web',
         'passwords' => 'users',
     ],
 
@@ -48,17 +48,17 @@ return [
         ],
         'teacher'=>[
             'driver'=>'session',
-            'provider'=>'teachers',
+            'provider'=>'users',
             'hash'=>false,
         ],
         'student'=>[
             'driver'=>'session',
-            'provider'=>'students',
+            'provider'=>'token',
             'hash'=>false,
         ],
         'father'=>[
             'driver'=>'session',
-            'provider'=>'fathers',
+            'provider'=>'users',
             'hash'=>false,
         ],
     ],
