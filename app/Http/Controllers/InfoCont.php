@@ -4,8 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\File;
+use Illuminate\Support\Facades\Storage;
+
+$uploadPath='\\uploads';
+
 class InfoCont extends Controller
 {
+    public function getUploadPath()
+    {
+        return '/uploads';
+    }
     public function showTeacherInfo(Request $request)
     {
         //dd($request->user()->teacher->id);
@@ -47,13 +55,45 @@ class InfoCont extends Controller
 
     public function uploadImage(Request $request)
     {
-        $image=$request->image;
+        clearstatcache();
+        $image=$request->file('image');
+        //dd($image);
         if($image->isValid()){
+            $path=(Storage::putFile($this->getUploadPath(),$image));
+
             $file=new File();
-            $file->name=$image->name();
-            $file->path=$image->path();
+            $file->name='personalPic'.$request->user()->id;
+            $file->ext=$image->getClientOriginalExtension();
+            $file->path=base_path().'/storage/app/'.$path;
             $file->user_id=$request->user()->id;
-            $file->size=$image->size();
+            $file->size=$image->getSize();
+            $file->save();
+            
+            
+
+            return response('saved!');
         }
+        return response('failed!',422);
+    }
+
+    public function showStudentInfo(Request $request)
+    {
+        $user=$request->user();
+        $info=[
+            'name'=>$user->name,
+            'email'=>$user->email,
+            'class'=>$user->student->class,
+            //'image'=>$request->user()->files->where('name','personalPic'),
+        ];
+        return response()->json($info);
+    }
+
+    public function showProfilePic(Request $request)
+    {
+        //dd($request->user()->files->where('name','personalPic'.$request->user()->id));
+        $path=$request->user()->files->where('name','personalPic'.$request->user()->id);
+        if($path->isNotEmpty())
+            return response()->file($path[0]->path);
+        else return response('nothing');
     }
 }

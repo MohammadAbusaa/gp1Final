@@ -8,9 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class File extends Model
 {
     use HasFactory;
-    protected $fillable=['name','path','size','user_id'];
+    protected $fillable=['name','ext','path','size','user_id'];
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function assignment()
+    {
+        return $this->belongsTo(Assignment::class);
     }
 }

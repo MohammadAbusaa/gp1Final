@@ -29,5 +29,10 @@ class Student extends Model
     {
         return $this->hasMany(Message::class);
     }
+
+    public function assignments()
+    {
+        return $this->hasMany(Assignment::class);
+    }
     //protected $primaryKey='user_id';
 }

@@ -9,10 +9,9 @@ use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use App\Models\User;
-use App\Models\Post;
+use App\Models\Student;
 
-class PostSent implements ShouldBroadcast
+class StudentJoined implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -21,15 +20,10 @@ class PostSent implements ShouldBroadcast
      *
      * @return void
      */
-    public $user;
-    public $post;
-
-    //public $afterCommit=true;
-
-    public function __construct(User $user,Post $post)
+    public $students;
+    public function __construct($students)
     {
-        $this->user=$user;
-        $this->post=$post;
+        $this->students=$students;
     }
 
     /**
@@ -39,12 +33,10 @@ class PostSent implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        //dd(new PrivateChannel('room.'.$this->post->room_id));
-        return new PrivateChannel('room.'.$this->post->room_id);
-    }
-
-    public function broadcastAs()
-    {
-        return 'room.created';
+        $arr=[];
+        foreach($this->students as $item){
+            array_push($arr,new PrivateChannel('user.'.$item->id));
+        }
+        return $arr;
     }
 }

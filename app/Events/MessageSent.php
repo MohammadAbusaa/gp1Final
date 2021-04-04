@@ -10,9 +10,9 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use App\Models\User;
-use App\Models\Post;
+use App\Models\Message;
 
-class PostSent implements ShouldBroadcast
+class MessageSent implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -21,15 +21,13 @@ class PostSent implements ShouldBroadcast
      *
      * @return void
      */
-    public $user;
-    public $post;
-
-    //public $afterCommit=true;
-
-    public function __construct(User $user,Post $post)
+    public $user,$msg,$rec;
+    
+    public function __construct(User $user,Message $msg,$rec)
     {
         $this->user=$user;
-        $this->post=$post;
+        $this->msg=$msg;
+        $this->rec=$rec;
     }
 
     /**
@@ -39,12 +37,6 @@ class PostSent implements ShouldBroadcast
      */
     public function broadcastOn()
     {
-        //dd(new PrivateChannel('room.'.$this->post->room_id));
-        return new PrivateChannel('room.'.$this->post->room_id);
-    }
-
-    public function broadcastAs()
-    {
-        return 'room.created';
+        return new PrivateChannel('chat.'.$this->user->id);
     }
 }

@@ -6,6 +6,7 @@ use App\Models\Room;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use App\Events\PostSent;
+use App\Events\StudentJoined;
 
 class RoomsCont extends Controller
 {
@@ -58,9 +59,10 @@ class RoomsCont extends Controller
 
     public function getRoomPosts(Request $request,$id)
     {
-        $room=Room::find($id)->first();
+        $room=Room::find($id);
+        //dd($room->name);
         $posts=$room->posts;
-        return response()->json($posts);
+        return response()->json(['posts'=>$posts]);
     }
 
     public function storePost(Request $request,$id)
@@ -72,9 +74,66 @@ class RoomsCont extends Controller
         $post->user_id=$request->user()->id;
         $post->room_id=$id;
         $post->save();
-
+        //dd(\broadcast(new PostSent($request->user(),$post))->toOthers());
         \broadcast(new PostSent($request->user(),$post))->toOthers();
 
         return response('added');
+    }
+
+    public function addStudentToRoom(Request $request,$id)
+    {
+        //dd($request->user());
+        $request->user()->student->rooms()->attach($id);
+
+        $students=Room::find($id)->students;
+
+        \broadcast(new StudentJoined($students))->toOthers();
+
+        return response()->json($students);
+    }
+
+    public function searchForRooms(Request $request)
+    {
+        // split on 1+ whitespace & ignore empty (eg. trailing space)
+        $searchValues = preg_split('/\s+/', $request->name, -1, PREG_SPLIT_NO_EMPTY); 
+
+        $rooms = Room::where(function ($q) use ($searchValues) {
+        foreach ($searchValues as $value) {
+            $q->orWhere('name', 'like', "%{$value}%");
+        }
+        })->orWhere('class',$request->class)->orWhere('subject',$request->subject)->get();
+
+
+        $user_rooms=$request->user()->student->rooms->map->only(['name','id']);
+        $curr_rooms=$rooms->map->only(['name','id']);
+        //dd($curr_rooms);
+
+        
+
+        return response()->json($this->compare($user_rooms,$curr_rooms));
+    }
+
+    private function compare($coll1,$coll2)
+    {
+        $flag=false;
+        $arr=[];
+        foreach($coll2 as $item){
+            $flag=false;
+            foreach($coll1 as $item2){
+                if($item['name']==$item2['name']){
+                    $flag=true;
+                    break;
+                }
+            }
+            if(!$flag){
+                array_push($arr,$item);
+            }
+        }
+        return $arr;
+    }
+
+    public function getRoomAssignments(Request $request,$id)
+    {
+        $room=Room::find($id);
     }
 }

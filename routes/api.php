@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthCont;
 use App\Http\Controllers\RoomsCont;
 use App\Http\Controllers\InfoCont;
+use App\Http\Controllers\MessageCont;
 
 
 /*
@@ -38,6 +39,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/getAssignments/{id}',[RoomsCont::class,'getRoomAssignments']);
     Route::post('/changeProfilePic',[InfoCont::class,'uploadImage']);
     Route::post('/addPost/{id}',[RoomsCont::class,'storePost']);
+    Route::post('/showSInfo',[InfoCont::class,'showStudentInfo']);
+    Route::post('/registerStudent/{id}',[RoomsCont::class,'addStudentToRoom']);
+    Route::post('/searchRooms',[RoomsCont::class,'searchForRooms']);
+    Route::post('/showProfilePic',[InfoCont::class,'showProfilePic']);
+    Route::post('/getUserMessages',[MessageCont::class,'index']);
+    Route::post('/storeMsg',[MessageCont::class,'store']);
 });
 
 //Route::middleware('auth:sanctum')->post('/dashboard',[UserCont::class,'show']);

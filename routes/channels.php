@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Broadcast;
 use App\Models\User;
+use App\Models\Room;
 
 /*
 |--------------------------------------------------------------------------
@@ -13,10 +14,12 @@ use App\Models\User;
 | used to check if an authenticated user can listen to the channel.
 |
 */
-Broadcast::routes(['prefix'=>'api','middleware'=>'auth:sanctum']);
 Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
-Broadcast::channel('room', function($user){
+Broadcast::channel('room.{room_id}', function($user,$room_id){
     return Auth::check();
+});
+Broadcast::channel('chat.{id}',function($user,$id){
+    return $user->id==$id;
 });

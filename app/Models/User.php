@@ -54,12 +54,16 @@ class User extends Authenticatable
     {
         return $this->hasOne(Father::class);
     }
-    public function file()
+    public function files()
     {
         return $this->hasMany(File::class);
     }
     public function posts()
     {
         return $this->hasMany(Post::class);
+    }
+    public function messages()
+    {
+        return $this->hasMany(Message::class);
     }
 }
