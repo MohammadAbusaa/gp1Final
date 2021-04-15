@@ -136,4 +136,10 @@ class RoomsCont extends Controller
     {
         $room=Room::find($id);
     }
+
+    public function getTeacherRooms(Request $request)
+    {
+        $rooms=$request->user()->teacher->rooms->map->only(['id','name','type']);
+        return response()->json($rooms);
+    }
 }

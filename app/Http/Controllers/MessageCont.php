@@ -12,9 +12,8 @@ class MessageCont extends Controller
 {
     public function index(Request $request)
     {
-        $msgs=Message::where('user_id',$request->user()->id)->orWhere('receiver_id',$request->user()->id)->get();
-        $msgsSorted=$msgs->sortBy('created_at');
-        $groupedMsgs=$msgsSorted->groupBy('receiver_id');
+        $msgs=Message::where('user_id',$request->user()->id)->orWhere('receiver_id',$request->user()->id)->orderBy('created_at','asc')->get();
+        $groupedMsgs=$msgs->groupBy('receiver_id');
         $usersArr=[];
         $lastMsgs=[];
         foreach ($groupedMsgs[$request->user()->id] as $value) {

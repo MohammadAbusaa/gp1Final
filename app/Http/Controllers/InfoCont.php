@@ -25,23 +25,38 @@ class InfoCont extends Controller
         return response()->json($data);
     }
 
-    public function updateTeacherInfo(Request $request)
+    public function updateName(Request $request)
     {
-        $info=$request->validate([
+        $request->validate([
             'name'=>'required',
+        ]);
+        $request->user()->update(['name'=>$request->name]);
+        return response('updated name');
+    }
+
+    public function updateEmail(Request $request)
+    {
+        $request->validate([
             'email'=>'required|email',
-            'password'=>'required',
-            'oldPassword'=>'required|password',
-            'major'=>'required',
         ]);
-        if($info['email']!=$request->user()->email)return response('you');
+        $email=User::where('email',$request->email)->get();
+        if($email)return response('taken');
+        $request->user()->update(['email'=>$request->email,]);
+        return response('updated email');
+    }
+
+    public function updatePass(Request $request)
+    {
+        $request->validate([
+            'newPass'=>'required',
+            'oldPass'=>'required|password',
+            'confPass'=>'required',
+        ]);
+        if($request->newPass!=$request->confPass)return response('no match');
         $request->user()->update([
-            'name'=>$info['name'],
-            'email'=>$info['email'],
-            'password'=>Hash::make($info['password']),
+            'password'=>Hash::make($request->newPass),
         ]);
-        $request->user()->teacher->update(['major'=>$info['major']]);
-        return response('updated');
+        return response('updated password');
 
     }
     
