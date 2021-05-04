@@ -47,6 +47,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/storeMsg',[MessageCont::class,'store']);
     Route::post('/getTRooms',[RoomsCont::class,'getTeacherRooms']);
     Route::put('/sendNewName',[InfoCont::class,'updateName']);
+    Route::post('/sendHW/{id}',[RoomsCont::class,'storeHW']);
+    Route::post('/getHandedStu/{id}',[RoomsCont::class,'getHandedTasks']);
 });
 
 //Route::middleware('auth:sanctum')->post('/dashboard',[UserCont::class,'show']);
