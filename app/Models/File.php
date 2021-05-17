@@ -18,4 +18,9 @@ class File extends Model
     {
         return $this->belongsTo(Assignment::class);
     }
+
+    public function material()
+    {
+        return $this->belongsTo(Material::class);
+    }
 }

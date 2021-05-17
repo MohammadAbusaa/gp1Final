@@ -12,9 +12,23 @@ use App\Events\PostSent;
 use App\Events\StudentJoined;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Material;
+use App\Models\Question;
+use App\Models\Answer;
+use App\Models\Exam;
 
 class RoomsCont extends Controller
 {
+    function generateRandomString($length = 20) {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
+    }
+
     public function getStudentRooms(Request $request)
     {
         $rooms=$request->user()->student->rooms;
@@ -23,6 +37,7 @@ class RoomsCont extends Controller
             array_push($arr,[
                 'name'=>$item['name'],
                 'room_id'=>$item['pivot']->room_id,
+                'type'=>$item['type'],
             ]);
         }
         return response()->json(['rooms'=>$arr]);
@@ -40,7 +55,10 @@ class RoomsCont extends Controller
         $room->subject=$request->subject;
         $room->teacher_id=$request->user()->id;
         if($request->type=='public')$room->type=1;
-        else $room->type=0;
+        else {
+            $room->type=0;
+            $room->password=$this->generateRandomString(20);
+        }
 
         $room->save();
 
@@ -56,6 +74,8 @@ class RoomsCont extends Controller
                 'name'=>$room->name,
                 'teacher'=>$room->teacher->user->name,
                 'subject'=>$room->subject,
+                'type'=>$room->type,
+                'password'=>$room->password,
             ],
 
         ];
@@ -227,5 +247,180 @@ class RoomsCont extends Controller
     public function downloadFile($id)
     {
         return response()->download(File::find($id)->path);
+    }
+
+    public function deletePost($id)
+    {
+        Post::destroy($id);
+        return response('done');
+    }
+
+    public function getRoomUsers($id)
+    {
+        $s=Room::find($id)->students;
+        $users=[];
+        foreach($s as $v){
+            array_push($users,[
+                'name'=>$v->user->name,
+                'id'=>$v->user->id,
+            ]);
+        }
+        return response()->json(['users'=>$users]);
+    }
+
+    public function sendCirc(Request $request,$id)
+    {
+        //dd($request->all());
+        $request->validate([
+            'circFile'=>'file',
+            'circDesc'=>'required',
+        ]);
+
+        if($request->circFile->isValid()){
+            $path=Storage::putFile('/uploads',$request->circFile);
+
+            $file=new File();
+            $mat=new Material();
+
+            $file->name='circ'.$id;
+            $file->ext=$request->circFile->getClientOriginalExtension();
+            $file->path=base_path().'/storage/app/'.$path;
+            $file->user_id=$request->user()->id;
+            $file->size=$request->circFile->getSize();
+            $file->save();
+
+            $mat->description=$request->circDesc;
+            $mat->file_id=$file->id;
+            $mat->room_id=$id;
+            $mat->save();
+
+            return \response('done');
+        }
+        return response('failed');
+    }
+
+    public function getCirc($id)
+    {
+        return response()->json(['circ'=>Room::find($id)->materials->map->only(['id','file_id','description']),]);
+    }
+
+    public function updateRoomPassword(Request $request,$id)
+    {
+        $pass=$request->validate(['password'=>'required']);
+        Room::find($id)->update(['password'=>$request->password]);
+        return response(['status'=>'OK']);
+    }
+
+    public function updateRoomName(Request $request,$id)
+    {
+        $request->validate(['name'=>'required']);
+        Room::find($id)->update(['name'=>$request->name]);
+        return response(['status'=>'OK']);
+    }
+
+    public function updateRoomType(Request $request,$id)
+    {
+        $room=Room::find($id);
+        if($room->type==1)$room->update(['type'=>'0']);
+        else $room->update(['type'=>'1']);
+        return response(['status'=>'OK']);
+    }
+
+    public function deleteRoom($id)
+    {
+        Room::destroy($id);
+        return \response(['status'=>'OK']);
+    }
+
+    public function deleteStudentFromRoom($room_id,$student_id)
+    {
+        Room::find($room_id)->students->find($student_id)->delete();
+        return response(['status'=>'OK']);
+    }
+
+    public function sendExam(Request $request,$id)
+    {
+        $data=$request->validate([
+            'name'=>'required',
+            'time'=>'required',// REMEMBER TO CHECK DATE ITSELF
+        ]);
+        $exam=new \App\Models\Exam();
+        $exam->name=$data['name'];
+        $exam->room_id=$id;
+        $exam->start_date=$data['time'];
+        $exam->is_enabled=1;
+        $exam->save();
+
+        return \response('exam added!');
+    }
+
+    public function getRoomExams($id)
+    {
+        $exams=Room::find($id)->exams->map->only(['id','name','start_date','is_enabled']);
+        $arr=[];
+        foreach ($exams as  $value) {
+            $qs=Question::where('exam_id',$value['id']);
+            $temp=$value+array('noOfQuestions'=>$qs->count());
+            array_push($arr,$temp);
+        }
+        return response()->json($arr);
+    }
+
+    public function getExamQuestions($id)
+    {
+        $exam=Exam::find($id);
+        return response()->json($exam->questions->map->only(['body','id']));
+    }
+
+    public function sendQ1(Request $request,$id)
+    {
+        $data=$request->validate([
+            'question'=>'required',
+            'answers'=>'required',
+            'AnswersConf'=>'required',
+        ]);
+
+        $question=new Question();
+        $question->body=$data['question'];
+        $question->time=$data['AnswersConf']['time'];
+        $question->exam_id=$id;
+
+        $question->save();
+
+        foreach($data['answers'] as $key=> $value){
+            if(!empty($value)&&$data['AnswersConf'][$key.'e']==true){
+                $ans=new Answer();
+                $ans->body=$value;
+                $ans->is_correct=$data['AnswersConf'][$key.'c'];
+                $ans->question_id=$question->id;
+                $ans->save();
+            }
+        }
+        return response(['status'=>'OK']);
+    }
+
+    public function sendQ23(Request $request,$id)
+    {
+        $data=$request->validate([
+            'question'=>'required',
+            'answer'=>'required',
+            'time'=>'required',
+        ]);
+
+        $q=new Question();
+        $q->body=$data['question'];
+        $q->time=$data['time'];
+        $q->exam_id=$id;
+
+        $q->save();
+
+        $ans=new Answer();
+        $ans->body=$data['answer'];
+        $ans->is_correct=true;
+        $ans->question_id=$q->id;
+
+        $ans->save();
+
+        return response(['status'=>'OK']);
     }
 }

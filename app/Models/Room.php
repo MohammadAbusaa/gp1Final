@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
 {
-    protected $fillable=['name','subject','class','type','teacher_id'];
+    protected $fillable=['name','subject','class','type','teacher_id','password'];
     use HasFactory;
     public function teacher()
     {
@@ -25,5 +25,15 @@ class Room extends Model
     public function assignments()
     {
         return $this->hasMany(Assignment::class);
+    }
+
+    public function materials()
+    {
+        return $this->hasMany(Material::class);
+    }
+
+    public function exams()
+    {
+        return $this->hasMany(Exam::class);
     }
 }

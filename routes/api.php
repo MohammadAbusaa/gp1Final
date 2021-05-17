@@ -49,6 +49,21 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::put('/sendNewName',[InfoCont::class,'updateName']);
     Route::post('/sendHW/{id}',[RoomsCont::class,'storeHW']);
     Route::post('/getHandedStu/{id}',[RoomsCont::class,'getHandedTasks']);
+    Route::post('/deletePost/{id}',[RoomsCont::class,'deletePost']);
+    Route::post('/getRoomUsers/{id}',[RoomsCont::Class,'getRoomUsers']);
+    Route::post('/sendCirc/{id}',[RoomsCont::class,'sendCirc']);
+    Route::post('/getCircs/{id}',[RoomsCont::class,'getCirc']);
+    Route::post('/downloadFile/{id}',[RoomsCont::class,'downloadFile']);
+    Route::post('/chRoomName/{id}',[RoomsCont::class,'updateRoomName']);
+    Route::post('/chRoomType/{id}', [RoomsCont::class,'updateRoomType']);
+    Route::post('/chRoomPass/{id}', [RoomsCont::class,'updateRoomPassword']);
+    Route::post('/deleteRoom/{id}',[RoomsCont::class,'deleteRoom']);
+    Route::post('/deleteStuFromRoom/{room_id}/{student_id}',[RoomsCont::class,'deleteStudentFromRoom']);
+    Route::post('/sendExam/{id}',[RoomsCont::class,'sendExam']);
+    Route::post('/getRoomExams/{id}',[RoomsCont::class,'getRoomExams']);
+    Route::post('/getExamQuestions/{id}',[RoomsCont::class,'getExamQuestions']);
+    Route::put('/sendQ1/{id}',[RoomsCont::class,'sendQ1']);
+    Route::put('/sendQ23/{id}',[RoomsCont::class,'sendQ23']);
 });
 
 //Route::middleware('auth:sanctum')->post('/dashboard',[UserCont::class,'show']);
