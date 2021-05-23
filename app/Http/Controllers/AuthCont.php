@@ -55,7 +55,7 @@ class AuthCont extends Controller
                         return response()->json([
                             'token' => $token->plainTextToken,
                             'user' => $user->name,
-                            'link' => 'http://localhost:8080/father',
+                            'link' => 'http://localhost:8080/parents',
                             'time' => \time(),
                         ]);
                     }
@@ -140,14 +140,14 @@ class AuthCont extends Controller
         } else if ($typeOfReq == 2) { // 2 is parent
             $parent = new User($request->validate([
                 'name' => 'required',
-                'email' => 'required|unique:users,email',
+                'email' => 'required|unique:users,email|email',
                 'password' => 'required',
             ]));
             $parent->name = $request->name;
             $parent->email = $request->email;
             $parent->password = bcrypt($request->password);
             $parent->save();
-            $parent->parent()->create(['id'=>$parent->id]);
+            $parent->father()->create(['id'=>$parent->id]);
         } else return response('type is invalid!')->setStatusCode(422);
         return response('http://localhost:8080/LogIn');
     }

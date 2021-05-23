@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\File;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Storage;
 
 $uploadPath='\\uploads';
@@ -40,7 +41,7 @@ class InfoCont extends Controller
             'email'=>'required|email',
         ]);
         $email=User::where('email',$request->email)->get();
-        if($email)return response('taken');
+        if(!is_null($email))return response('taken');
         $request->user()->update(['email'=>$request->email,]);
         return response('updated email');
     }
@@ -110,5 +111,11 @@ class InfoCont extends Controller
         if($path->isNotEmpty())
             return response()->file($path[0]->path);
         else return response('nothing');
+    }
+
+    public function getUserNotifications(Request $request)
+    {
+        $notif=$request->user()->notifications->map->only(['body','created_at']);
+        return response()->json($notif);
     }
 }

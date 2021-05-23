@@ -5,12 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Father extends Model
+class Notification extends Model
 {
     use HasFactory;
-    protected $fillable=['id','user_id'];
-    public function students()
+    protected $fillable=['body','user_id','seen'];
+
+    public function user()
     {
-        return $this->hasMany(Student::class);
+        return $this->belongsTo(User::class);
     }
 }

@@ -15,7 +15,7 @@ class Exam extends Model
         return $this->belongsTo(Room::class);
     }
 
-    public function student()
+    public function students()
     {
         return $this->belongsToMany(Student::class)->withPivot('mark','feedback')->withTimestamps();
     }

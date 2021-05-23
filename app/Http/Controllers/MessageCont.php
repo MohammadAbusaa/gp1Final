@@ -17,7 +17,8 @@ class MessageCont extends Controller
         $usersArr=[];
         $lastMsgs=[];
         foreach ($groupedMsgs[$request->user()->id] as $value) {
-            $groupedMsgs[$value->user_id]->push($value);
+            if($groupedMsgs->has($value->user_id))
+                $groupedMsgs[$value->user_id]->push($value);
         }
         $groupedMsgs->forget($request->user()->id);
         $sortedArr=[];

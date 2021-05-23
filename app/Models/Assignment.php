@@ -28,6 +28,6 @@ class Assignment extends Model
 
     public function students()
     {
-        return $this->belongsToMany(Student::class);
+        return $this->belongsToMany(Student::class)->withPivot('handed_file','haded_date','mark','feedback');
     }
 }
