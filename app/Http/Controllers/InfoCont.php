@@ -75,6 +75,8 @@ class InfoCont extends Controller
         $image=$request->file('image');
         //dd($image);
         if($image->isValid()){
+            $res=$request->user()->files->where('name','personalPic'.$request->user()->id);
+            if($res->isNotEmpty())File::find($res[0]->id)->delete();
             $path=(Storage::putFile($this->getUploadPath(),$image));
 
             $file=new File();
@@ -107,9 +109,13 @@ class InfoCont extends Controller
     public function showProfilePic(Request $request)
     {
         //dd($request->user()->files->where('name','personalPic'.$request->user()->id));
-        $path=$request->user()->files->where('name','personalPic'.$request->user()->id);
-        if($path->isNotEmpty())
-            return response()->file($path[0]->path);
+        $path=$request->user()->files->where('name','personalPic'.$request->user()->id)->first();
+        if(!is_null($path)){
+            $conts=\file_get_contents($path['path']);
+            $enc=base64_encode($conts);
+            $info=\pathinfo($path['path'],PATHINFO_EXTENSION);
+            return response()->json(['img'=>$enc,'type'=>$info]);
+        }
         else return response('nothing');
     }
 

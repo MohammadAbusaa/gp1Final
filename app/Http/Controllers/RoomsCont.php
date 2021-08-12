@@ -19,6 +19,8 @@ use App\Models\StudentAnswer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use App\Mail\RequestParent;
+use Illuminate\Support\Facades\Mail;
 
 class RoomsCont extends Controller
 {
@@ -89,6 +91,19 @@ class RoomsCont extends Controller
         return response()->json($info);
     }
 
+    public function getFile($id,$fid=NULL)
+    {
+        $path='';
+        if(!is_null($fid))
+            $path=$fid;
+        else
+            $path=User::find($id)->files->where('name','personalPic'.$id)->first()['path'];
+        if(empty($path))return '';
+        $enc=\base64_encode(file_get_contents($path));
+        $type=\pathinfo($path,PATHINFO_EXTENSION);
+        return array('type'=>$type,'file'=>$enc,);
+    }
+
     public function getRoomPosts(Request $request, $id)
     {
         $room = Room::find($id);
@@ -96,12 +111,14 @@ class RoomsCont extends Controller
         $p = $room->posts;
         $posts = [];
         foreach ($p as $k => $v) {
-            array_push($posts, [
-                'body' => $v->body,
-                'id' => $v->id,
-                'user' => User::find($v->user_id)->name,
-                'time' => $v->created_at,
-            ]);
+            $temp=$this->getFile($v->user_id);
+            $arr=array('body' => $v->body,
+            'id' => $v->id,
+            'user' => User::find($v->user_id)->name,
+            'time' => $v->created_at,);
+            if(!empty($temp))$arr+=array('img'=>'data:image/'.$temp['type'].';base64,'.$temp['file']);
+            else $arr+=array('img'=>'none');
+            array_push($posts,$arr);
         }
         return response()->json(['posts' => $posts]);
     }
@@ -190,7 +207,7 @@ class RoomsCont extends Controller
     {
         $room = Room::find($id);
         $a = $room->assignments;
-        $assignments = $a->map->only(['id', 'assignment_details', 'due_date']);
+        $assignments = $a->map->only(['id', 'assignment_details', 'due_date','assignment_file']);
         return response()->json(['assignments' => $assignments]);
     }
 
@@ -268,7 +285,9 @@ class RoomsCont extends Controller
     public function downloadFile($id)
     {
         $f=File::find($id);
-        return response()->download($f->path,$f->name,['Content-Disposition'=>'attachment']);
+        $arr=$this->getFile(0,$f->path);
+        $arr['name']=$f->name;
+        return response()->json($arr);
     }
 
     public function deletePost($id)
@@ -425,7 +444,7 @@ class RoomsCont extends Controller
         if($ans->isEmpty())return null;
         
         foreach($ans as $v){
-            $correct=Answer::where('question_id',$v['question_id'])->where('is_correct',true)->first();
+            $correct=Answer::where('question_id',$v->question_id)->where('is_correct',1)->first();
             if($correct['answer']===$v['body'])$mark++;
         }
 
@@ -461,7 +480,7 @@ class RoomsCont extends Controller
             $temp+=array('start_date'=>$value['start_date']);
             if(!is_null($request->user()->student)){
                 if($value['is_enabled']===0)continue;
-                $var=$this->getStudentMarks($request->user()->id,$value['id']);
+                $var=$this->getStudentMarks($request->user()->student->id,$value['id']);
                 if(!is_null($var)){
                     $temp+=$var;
                     $temp+=array('completed'=>true);
@@ -691,9 +710,72 @@ class RoomsCont extends Controller
         foreach($stu as $v){
             $temp=array('name'=>Student::find(intval($v['pivot']->student_id))->user->name);
             $temp+=array('mark'=>$v['pivot']->mark);
+            $temp+=array('id'=>$v->id);
+            $temp+=array('fb'=>$v['pivot']->feedback);
             array_push($arr,$temp);
         }
 
         return response()->json($arr);
+    }
+
+    public function getTaskMark(Request $request,$id)
+    {
+        $task=Assignment::find($id)->students->where('user_id',$request->user()->id)->map->only(['pivot']);
+        if($task->isEmpty())return '';
+        $arr=array(
+            'mark'=>$task[0]['pivot']['mark'],
+            'feedback'=>$task[0]['pivot']['feedback'],
+        );
+        return $arr;
+    }
+
+    public function updateExamFB(Request $request,$id)
+    {
+        $data=$request->validate([
+            'feedback'=>'required',
+        ]);
+
+        foreach($data['feedback'][0] as $k=>$v){
+            Exam::find($id)->students()->updateExistingPivot(intval($k),['feedback'=>$v]);
+        }
+        return 'updated';
+    }
+
+    public function updateExam(Request $request,$id)
+    {
+        $data=$request->validate([
+            'name'=>'required',
+            'time'=>'required',
+            'en'=>'boolean',
+        ]);
+        
+        $exam=Exam::find($id);
+        
+        $exam->update([
+            'name'=>$data['name'],
+            'start_date'=>$data['time'],
+        ]);
+
+        if($exam->is_enabled==0&&$data['en']=='true'){
+            $exam->update(['is_enabled'=>1]);
+
+            $notification=new Notification();
+            $notification->body=$exam->room->name.' قام المعلم باضافة امتحان جديد في الغرفة';
+            $notification->user_id=$request->user()->id;
+            $notification->seen=false;
+    
+            $notification->save();
+        }
+        else {
+            $exam->update(['is_enabled'=>$data['en']]);
+        }
+
+        return 'updated';
+    }
+
+    public function reqFath(Request $request,$id)
+    {
+        $to=Student::find($id)->user;
+        Mail::to($to)->send(new RequestParent($request->user()));
     }
 }

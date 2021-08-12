@@ -76,6 +76,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/sendTask/{id}',[RoomsCont::class,'handStudentTask']);
     Route::post('/updateStudentsMarks/{id}',[RoomsCont::class,'updateTaskVals']);
     Route::post('/getStudentsExamMarks/{id}',[RoomsCont::class,'getExamMarks']);
+    Route::post('/getStudentTaskMark/{id}',[RoomsCont::class,'getTaskMark']);
+    Route::post('/sendExamFB/{id}',[RoomsCont::class,'updateExamFB']);
+    Route::post('/updateExamData/{id}',[RoomsCont::class,'updateExam']);
+    Route::post('/requestFather/{id}',[RoomsCont::class,'reqFath']);
 });
 
 //Route::middleware('auth:sanctum')->post('/dashboard',[UserCont::class,'show']);

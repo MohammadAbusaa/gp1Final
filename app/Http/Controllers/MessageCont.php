@@ -10,6 +10,15 @@ use Carbon\Carbon;
 
 class MessageCont extends Controller
 {
+    public function getFile($id)
+    {
+        $path=User::find($id)->files->where('name','personalPic'.$id)->first()['path'];
+        if(empty($path))return '';
+        $enc=\base64_encode(file_get_contents($path));
+        $type=\pathinfo($path,PATHINFO_EXTENSION);
+        return ['type'=>$type,'file'=>$enc];
+    }
+    
     public function index(Request $request)
     {
         $msgs=Message::where('user_id',$request->user()->id)->orWhere('receiver_id',$request->user()->id)->orderBy('created_at','asc')->get();
@@ -27,9 +36,11 @@ class MessageCont extends Controller
                 $key=>$item->sortBy('created_at')
                         ]);
         foreach($groupedMsgs as $k=>$v){
+            $user=User::find($k);
             array_push($usersArr,[
-                User::find($k),
+                $user,
                 $v[0]['body'],
+                $this->getFile($user->id),
             ]);
         }
         return response()->json([
@@ -37,6 +48,7 @@ class MessageCont extends Controller
             'users'=>$usersArr,
             'user'=>$request->user(),
             'sorted'=>$sortedArr,
+            'myImg'=>$this->getFile($request->user()->id),
         ]);
         //dd($groupedMsgs);
     }
